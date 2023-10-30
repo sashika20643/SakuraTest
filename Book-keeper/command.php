@@ -8,7 +8,7 @@
 <body>
 
 <div id="output-container"></div>
-<div id="done">
+<div id="done" style="display:none">
     <h3>All done..use php artisan serve to run the project...</h3>
 <b>Credentials:</b>
 Admin
@@ -31,34 +31,42 @@ Normal User:
 </ul>
 
 </div>
-
 <script>
-function runCommand(command, message) {
-    const outputContainer = document.getElementById('output-container');
-    const outputDiv = document.createElement('div');
-    outputDiv.innerHTML = `<strong>${message}</strong><br><pre>Executing command...</pre><br>`;
-    outputContainer.appendChild(outputDiv);
 
-    fetch('execute.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ command, message }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Update the output with the actual command result
-        outputDiv.innerHTML = `<strong>${message}</strong><br><pre>${data.output}</pre><br>`;
-    })
-    .catch(error => console.error('Error:', error));
-}
+(async function () {
+    async function runCommand(command, message) {
+        const outputContainer = document.getElementById('output-container');
+        const outputDiv = document.createElement('div');
+        outputDiv.innerHTML = `<strong>${message}</strong><br><pre>Executing command...</pre><br>`;
+        outputContainer.appendChild(outputDiv);
 
-// Example commands
-runCommand('composer update', 'Updating composer....');
-runCommand('npm install', 'Installing npm packages....');
-runCommand('php artisan key:generate', 'Generating application key....');
-runCommand('php artisan migrate --seed', 'Running database migrations and seeding....');
+        try {
+            const response = await fetch('execute.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ command, message }),
+            });
+
+            const data = await response.json();
+
+            // Update the output with the actual command result
+            outputDiv.innerHTML = `<strong>${message}</strong><br><pre>${data.output}</pre><br>`;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Example commands (running sequentially)
+    await runCommand('composer update', 'Updating composer....');
+    await runCommand('npm install', 'Installing npm packages....');
+    await runCommand('php artisan key:generate', 'Generating application key....');
+    await runCommand('php artisan migrate --seed', 'Running database migrations and seeding....');
+
+    // Display the "done" message after all commands are executed
+    document.getElementById('done').style.display = 'block';
+})();
 </script>
 
 </body>
